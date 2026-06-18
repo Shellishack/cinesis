@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { conversationFromText } from "./documents";
 import type { ConversationRow, Load } from "./schemas";
 
 type Row = unknown[];
@@ -100,22 +101,7 @@ export function parseDelimitedText(text: string): {
   }
 
   return {
-    conversation: text
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => {
-        const separator = line.indexOf(":");
-        if (separator === -1) {
-          return { speaker: "Unknown", dialogue: line };
-        }
-
-        return {
-          speaker: line.slice(0, separator).trim() || "Unknown",
-          dialogue: line.slice(separator + 1).trim()
-        };
-      })
-      .filter((row) => row.dialogue),
+    conversation: conversationFromText(text),
     loads: []
   };
 }

@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
+import {
+  conversationFromText,
+  extractDocxText,
+  extractPdfText,
+  extractPptxText
+} from "@/lib/documents";
 import { parseDelimitedText, parseWorkbook } from "@/lib/excel";
 import { extractDriverProfile } from "@/lib/llm";
 import { buildReadme, rankLoads } from "@/lib/ranking";
+import type { ConversationRow, Load } from "@/lib/schemas";
 
 function isSpreadsheet(file: File): boolean {
   const name = file.name.toLowerCase();
@@ -14,6 +21,10 @@ function isSpreadsheet(file: File): boolean {
   );
 }
 
+function extension(file: File): string {
+  return file.name.toLowerCase().split(".").pop() ?? "";
+}
+
 function isText(file: File): boolean {
   const name = file.name.toLowerCase();
   return (
@@ -24,28 +35,55 @@ function isText(file: File): boolean {
   );
 }
 
+function isDocument(file: File): boolean {
+  return ["pdf", "docx", "pptx"].includes(extension(file));
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "Upload a workbook, CSV, or text transcript." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Upload a workbook, document, presentation, PDF, CSV, or text transcript." },
+        { status: 400 }
+      );
     }
 
     const buffer = await file.arrayBuffer();
-    const { conversation, loads } =
-      isSpreadsheet(file) && !file.name.toLowerCase().endsWith(".csv") && !file.name.toLowerCase().endsWith(".tsv")
-        ? parseWorkbook(buffer)
-        : isSpreadsheet(file) || isText(file)
-          ? parseDelimitedText(new TextDecoder().decode(buffer))
-          : { conversation: [], loads: [] };
+    let conversation: ConversationRow[] = [];
+    let loads: Load[] = [];
+
+    if (
+      isSpreadsheet(file) &&
+      !file.name.toLowerCase().endsWith(".csv") &&
+      !file.name.toLowerCase().endsWith(".tsv")
+    ) {
+      const parsed = parseWorkbook(buffer);
+      conversation = parsed.conversation;
+      loads = parsed.loads;
+    } else if (isSpreadsheet(file) || isText(file)) {
+      const parsed = parseDelimitedText(new TextDecoder().decode(buffer));
+      conversation = parsed.conversation;
+      loads = parsed.loads;
+    } else if (isDocument(file)) {
+      const ext = extension(file);
+      const text =
+        ext === "pdf"
+          ? await extractPdfText(buffer)
+          : ext === "docx"
+            ? await extractDocxText(buffer)
+            : await extractPptxText(buffer);
+      conversation = conversationFromText(text);
+      loads = [];
+    }
 
     if (!conversation.length) {
       return NextResponse.json(
         {
           error:
-            "This file could not be read as a supported transcript. Upload .xlsx, .csv, .tsv, .txt, .md, or another text-based file."
+            "This file could not be read as a supported transcript. Upload .xlsx, .csv, .tsv, .txt, .md, .pdf, .docx, .pptx, or another text-based file."
         },
         { status: 400 }
       );

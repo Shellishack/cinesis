@@ -255,12 +255,12 @@ export default function Home() {
               {file ? file.name : "Drop or choose a workbook, CSV, or transcript"}
             </span>
             <span className="text-sm text-stone-600">
-              Supports .xlsx, .csv, .tsv, .txt, .md, and text-based files
+              Supports .xlsx, .csv, .tsv, .pdf, .docx, .pptx, .txt, .md, and text-based files
             </span>
             <input
               className="sr-only"
               type="file"
-              accept=".xlsx,.xls,.xlsm,.csv,.tsv,.txt,.md,.json,text/*"
+              accept=".xlsx,.xls,.xlsm,.csv,.tsv,.pdf,.docx,.pptx,.txt,.md,.json,text/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation"
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
             />
           </label>
