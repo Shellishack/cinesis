@@ -44,11 +44,12 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file");
     const passcode = formData.get("passcode");
+    const expectedShareCode = process.env.VISITOR_PASSCODE;
 
-    if (process.env.VISITOR_PASSCODE) {
-      if (typeof passcode !== "string" || passcode !== process.env.VISITOR_PASSCODE) {
+    if (expectedShareCode) {
+      if (typeof passcode !== "string" || passcode !== expectedShareCode) {
         return NextResponse.json(
-          { error: "Invalid visitor passcode." },
+          { error: "Invalid or missing share code." },
           { status: 401 }
         );
       }

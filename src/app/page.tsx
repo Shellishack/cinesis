@@ -1,7 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
 import {
   BarChart3,
   FileSpreadsheet,
@@ -165,14 +166,15 @@ function DispatcherView({ result }: { result: AnalysisResult }) {
   );
 }
 
-export default function Home() {
+function HomeContent() {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [profile, setProfile] = useState<EditableProfile | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("driver");
-  const [passcode, setPasscode] = useState("");
+  const searchParams = useSearchParams();
+  const shareCode = searchParams.get("code") ?? "";
 
   const rejectedPreview = useMemo(
     () => result?.rejectedLoads.slice(0, 5) ?? [],
@@ -189,7 +191,7 @@ export default function Home() {
     setIsLoading(true);
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("passcode", passcode);
+    formData.append("passcode", shareCode);
 
     const response = await fetch("/api/analyze", {
       method: "POST",
@@ -250,7 +252,15 @@ export default function Home() {
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-5 px-5 py-6">
-        <div className="grid gap-4 rounded-md border border-stone-300 bg-white p-4 md:grid-cols-[1fr_220px_auto] md:items-center">
+        {!shareCode ? (
+          <div className="rounded-md border border-red-300 bg-red-50 p-5 text-red-950">
+            <h2 className="mb-1 text-lg font-semibold">Unauthorized</h2>
+            <p className="text-sm">
+              This demo requires a valid share code in the URL.
+            </p>
+          </div>
+        ) : (
+        <div className="grid gap-4 rounded-md border border-stone-300 bg-white p-4 md:grid-cols-[1fr_auto] md:items-center">
           <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed border-stone-400 bg-stone-50 px-4 py-6 text-center">
             <FileSpreadsheet className="h-8 w-8 text-emerald-800" aria-hidden />
             <span className="font-medium text-stone-900">
@@ -267,17 +277,6 @@ export default function Home() {
             />
           </label>
 
-          <label className="grid gap-1 text-sm font-medium text-stone-700">
-            Visitor passcode
-            <input
-              className="h-11 rounded-md border border-stone-300 bg-white px-3 text-stone-950 outline-none focus:border-emerald-700"
-              type="password"
-              value={passcode}
-              onChange={(event) => setPasscode(event.target.value)}
-              placeholder="Required for demo"
-            />
-          </label>
-
           <button
             className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-emerald-800 px-5 font-semibold text-white disabled:cursor-not-allowed disabled:bg-stone-400"
             onClick={analyze}
@@ -291,6 +290,7 @@ export default function Home() {
             Analyze
           </button>
         </div>
+        )}
 
         {error ? (
           <div className="rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900">
@@ -432,5 +432,19 @@ export default function Home() {
         ) : null}
       </section>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-stone-100 p-6 text-stone-900">
+          Loading demo...
+        </main>
+      }
+    >
+      <HomeContent />
+    </Suspense>
   );
 }
