@@ -11,10 +11,13 @@
   },
   "dependencies": {
     "@langchain/openai": "latest",
+    "jszip": "^3.10.1",
     "langchain": "latest",
     "leaflet": "^1.9.4",
     "lucide-react": "latest",
+    "mammoth": "^1.12.0",
     "next": "latest",
+    "pdf-parse": "^2.4.5",
     "react": "latest",
     "react-dom": "latest",
     "react-leaflet": "^5.0.0",
