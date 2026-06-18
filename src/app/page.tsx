@@ -172,6 +172,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("driver");
+  const [passcode, setPasscode] = useState("");
 
   const rejectedPreview = useMemo(
     () => result?.rejectedLoads.slice(0, 5) ?? [],
@@ -188,6 +189,7 @@ export default function Home() {
     setIsLoading(true);
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("passcode", passcode);
 
     const response = await fetch("/api/analyze", {
       method: "POST",
@@ -248,7 +250,7 @@ export default function Home() {
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-5 px-5 py-6">
-        <div className="grid gap-4 rounded-md border border-stone-300 bg-white p-4 md:grid-cols-[1fr_auto] md:items-center">
+        <div className="grid gap-4 rounded-md border border-stone-300 bg-white p-4 md:grid-cols-[1fr_220px_auto] md:items-center">
           <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed border-stone-400 bg-stone-50 px-4 py-6 text-center">
             <FileSpreadsheet className="h-8 w-8 text-emerald-800" aria-hidden />
             <span className="font-medium text-stone-900">
@@ -262,6 +264,17 @@ export default function Home() {
               type="file"
               accept=".xlsx,.xls,.xlsm,.csv,.tsv,.pdf,.docx,.pptx,.txt,.md,.json,text/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation"
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            />
+          </label>
+
+          <label className="grid gap-1 text-sm font-medium text-stone-700">
+            Visitor passcode
+            <input
+              className="h-11 rounded-md border border-stone-300 bg-white px-3 text-stone-950 outline-none focus:border-emerald-700"
+              type="password"
+              value={passcode}
+              onChange={(event) => setPasscode(event.target.value)}
+              placeholder="Required for demo"
             />
           </label>
 

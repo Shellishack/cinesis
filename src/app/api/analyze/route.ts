@@ -43,6 +43,16 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
+    const passcode = formData.get("passcode");
+
+    if (process.env.VISITOR_PASSCODE) {
+      if (typeof passcode !== "string" || passcode !== process.env.VISITOR_PASSCODE) {
+        return NextResponse.json(
+          { error: "Invalid visitor passcode." },
+          { status: 401 }
+        );
+      }
+    }
 
     if (!(file instanceof File)) {
       return NextResponse.json(
